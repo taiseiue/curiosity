@@ -25,7 +25,7 @@
         <ApplicationTitle>Curiosity</ApplicationTitle>
 
         <!-- App Identifier -->
-        <ApplicationId>com.companyname.curiosity</ApplicationId>
+        <ApplicationId>com.taiseiue.curiosity</ApplicationId>
 
         <!-- Versions -->
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
