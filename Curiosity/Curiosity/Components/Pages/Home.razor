@@ -1,6 +1,8 @@
 ﻿@page "/"
 @using Plugin.BLE
+@using Plugin.BLE.Abstractions
 @using Plugin.BLE.Abstractions.Contracts
+@using Plugin.BLE.Abstractions.Exceptions
 
 <h1>Hello, world!</h1>
 
@@ -13,11 +15,14 @@ Welcome to your new app.
 <hr />
 @foreach (var device in deviceList)
 {
-    <p>@device.Name (@device.Id)</p>
+    <button class="btn btn-secondary" @onclick="() => OnDeviceSelected(device)">@device.Name (@device.Id)</button>
 }
+
+<p>@rawText</p>
 
 @code {
     string bleState = "Unknown";
+    string rawText = "No data received yet.";
     List<IDevice> deviceList = new List<IDevice>();
     IBluetoothLE ble = CrossBluetoothLE.Current;
     IAdapter adapter = CrossBluetoothLE.Current.Adapter;
@@ -37,5 +42,29 @@ Welcome to your new app.
     {
         deviceList.Clear();
         await adapter.StartScanningForDevicesAsync();
+    }
+    private async Task OnDeviceSelected(IDevice device)
+    {
+        try
+        {
+            await adapter.ConnectToDeviceAsync(device);
+            var services = await device.GetServicesAsync();
+            var characteristics = await services[0].GetCharacteristicsAsync();
+            foreach (var characteristic in characteristics)
+            {
+                characteristic.ValueUpdated += (o, args) =>
+                {
+                    var bytes = args.Characteristic.Value;
+                    rawText = System.Text.Encoding.UTF8.GetString(bytes);
+                    StateHasChanged();
+                };
+                await characteristic.StartUpdatesAsync();
+            }
+
+        }
+        catch (DeviceConnectionException e)
+        {
+            // ... could not connect to device
+        }
     }
 }
