@@ -1,63 +1,73 @@
 ﻿@page "/counter"
 
-<h1>Counter</h1>
+<h1>位置情報</h1>
 
-<p role="status">Current count: @location</p>
+<p>@locationText</p>
 
-<button class="btn btn-primary" @onclick="GetCurrentLocation">Click me</button>
+<button class="btn btn-primary" @onclick="OnScanButtonClicked">@scanButtonText</button>
 
 @code {
-    private string location = "";
-
-    private CancellationTokenSource? _cancelTokenSource;
+    private string locationText = "Unknown";
+    private string scanButtonText = "位置情報を取得";
+    private CancellationTokenSource _cancelTokenSource;
     private bool _isCheckingLocation;
 
-    public async Task GetCurrentLocation()
+    protected override async Task OnInitializedAsync()
     {
         try
         {
-            this.location = "Checking location...";
+            Geolocation.LocationChanged += Geolocation_LocationChanged;
+            // Using GeolocationAccuracy.Medium as a balance between accuracy and power consumption.
+            // Developers can adjust this value to High or Low based on their specific requirements.
+            var request = new GeolocationListeningRequest(GeolocationAccuracy.Best, TimeSpan.FromSeconds(3));
+            var success = await Geolocation.StartListeningForegroundAsync(request);
 
+            string status = success
+            ? "Started listening for foreground location updates"
+            : "Couldn't start listening";
+        }
+        catch (Exception ex)
+        {
+            // Unable to start listening for location changes
+        }
+    }
+
+    async Task OnScanButtonClicked()
+    {
+        try
+        {
             _isCheckingLocation = true;
-
-            // Check if location services are available
-            var status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
-            if (status != PermissionStatus.Granted)
-            {
-                this.location = "Location permission denied.";
-                return;
-            }
 
             GeolocationRequest request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(10));
 
             _cancelTokenSource = new CancellationTokenSource();
-
-            this.location = "Location Waiting...";
-            Location? location = await Geolocation.Default.GetLocationAsync(request, _cancelTokenSource.Token);
+            scanButtonText = "位置情報を取得中...";
+            StateHasChanged();
+            Location location = await Geolocation.Default.GetLocationAsync(request, _cancelTokenSource.Token);
 
             if (location != null)
-                this.location = $"Latitude: {location.Latitude}, Longitude: {location.Longitude}, Altitude: {location.Altitude}";
-            else
-                this.location = "Location not available.";
+                locationText = $"Latitude: {location.Latitude}, Longitude: {location.Longitude}, Altitude: {location.Altitude}";
+            scanButtonText = "位置情報を取得";
         }
         // Catch one of the following exceptions:
-        //   FeatureNotSupportedException
-        //   FeatureNotEnabledException
-        //   PermissionException
+        // FeatureNotSupportedException
+        // FeatureNotEnabledException
+        // PermissionException
         catch (Exception ex)
         {
             // Unable to get location
-            this.location = $"Error: {ex.Message}";
         }
         finally
         {
             _isCheckingLocation = false;
         }
     }
-
-    public void CancelRequest()
+    void Geolocation_LocationChanged(object sender, GeolocationLocationChangedEventArgs e)
     {
-        if (_isCheckingLocation && _cancelTokenSource != null && _cancelTokenSource.IsCancellationRequested == false)
-            _cancelTokenSource.Cancel();
+        if (e.Location != null)
+            locationText = $"Latitude: {e.Location.Latitude}, Longitude: {e.Location.Longitude}, Altitude: {e.Location.Altitude}";
+        TimeSpan vibrationLength = TimeSpan.FromSeconds(1);
+        Vibration.Default.Vibrate(vibrationLength);
+        StateHasChanged();
     }
 }

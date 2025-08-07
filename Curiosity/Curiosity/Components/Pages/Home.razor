@@ -1,5 +1,41 @@
 ﻿@page "/"
+@using Plugin.BLE
+@using Plugin.BLE.Abstractions.Contracts
 
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+
+<p>Bluetooth state: @bleState</p>
+
+
+<button class="btn btn-primary" @onclick="OnScanButtonClicked">デバイスのスキャン</button>
+<hr />
+@foreach (var device in deviceList)
+{
+    <p>@device.Name (@device.Id)</p>
+}
+
+@code {
+    string bleState = "Unknown";
+    List<IDevice> deviceList = new List<IDevice>();
+    IBluetoothLE ble = CrossBluetoothLE.Current;
+    IAdapter adapter = CrossBluetoothLE.Current.Adapter;
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        bleState = ble.State.ToString();
+        ble.StateChanged += (s, e) =>
+        {
+            bleState = e.NewState.ToString();
+            StateHasChanged();
+        };
+        adapter.DeviceDiscovered += (s, a) => deviceList.Add(a.Device);
+        await adapter.StartScanningForDevicesAsync();
+    }
+    private async Task OnScanButtonClicked()
+    {
+        deviceList.Clear();
+        await adapter.StartScanningForDevicesAsync();
+    }
+}
