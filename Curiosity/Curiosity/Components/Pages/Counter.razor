@@ -2,15 +2,62 @@
 
 <h1>Counter</h1>
 
-<p role="status">Current count: @currentCount</p>
+<p role="status">Current count: @location</p>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+<button class="btn btn-primary" @onclick="GetCurrentLocation">Click me</button>
 
 @code {
-    private int currentCount = 0;
+    private string location = "";
 
-    private void IncrementCount()
+    private CancellationTokenSource? _cancelTokenSource;
+    private bool _isCheckingLocation;
+
+    public async Task GetCurrentLocation()
     {
-        currentCount++;
+        try
+        {
+            this.location = "Checking location...";
+
+            _isCheckingLocation = true;
+
+            // Check if location services are available
+            var status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+            if (status != PermissionStatus.Granted)
+            {
+                this.location = "Location permission denied.";
+                return;
+            }
+
+            GeolocationRequest request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(10));
+
+            _cancelTokenSource = new CancellationTokenSource();
+
+            this.location = "Location Waiting...";
+            Location? location = await Geolocation.Default.GetLocationAsync(request, _cancelTokenSource.Token);
+
+            if (location != null)
+                this.location = $"Latitude: {location.Latitude}, Longitude: {location.Longitude}, Altitude: {location.Altitude}";
+            else
+                this.location = "Location not available.";
+        }
+        // Catch one of the following exceptions:
+        //   FeatureNotSupportedException
+        //   FeatureNotEnabledException
+        //   PermissionException
+        catch (Exception ex)
+        {
+            // Unable to get location
+            this.location = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _isCheckingLocation = false;
+        }
+    }
+
+    public void CancelRequest()
+    {
+        if (_isCheckingLocation && _cancelTokenSource != null && _cancelTokenSource.IsCancellationRequested == false)
+            _cancelTokenSource.Cancel();
     }
 }
