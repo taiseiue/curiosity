@@ -8,26 +8,24 @@
 
 <h1>Curiosityへようこそ!</h1>
 
-@if (characteristic != null)
+@if (Rover.IsConnected)
 {
-    <button class="btn btn-secondary" @onclick="() => OnButtonClicked(0x01)">停止</button>
-    <button class="btn btn-secondary" @onclick="() => OnButtonClicked(0x02)">前進</button>
-    <button class="btn btn-secondary" @onclick="() => OnButtonClicked(0x03)">後退</button>
-    <button class="btn btn-secondary" @onclick="() => OnButtonClicked(0x04)">右回転</button>
-    <button class="btn btn-secondary" @onclick="() => OnButtonClicked(0x05)">左回転</button>
-    <button class="btn btn-secondary" @onclick="() => OnButtonClicked(0x06)">右移動</button>
-    <button class="btn btn-secondary" @onclick="() => OnButtonClicked(0x07)">左移動</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Stop)">停止</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Forward)">前進</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Backward)">後退</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.TurnRight)">右回転</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.TurnLeft)">左回転</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Right)">右移動</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Left)">左移動</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Reset)">リセット</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Kill)">キル</button>
+    <hr />
+    <h3>@Rover.Temperature</h3>
+    <p>@Rover.Text</p>
 }
 else
 {
     <p>デバイスに接続されていません。</p>
-    <p>Bluetooth state: @bleState</p>
-    <button class="btn btn-primary" @onclick="OnScanButtonClicked">デバイスのスキャン</button>
-    <hr />
-    @foreach (var device in deviceList.Where(device => device.Name != null))
-    {
-        <button class="btn btn-secondary" @onclick="() => OnDeviceSelected(device)">@device.Name (@device.Id)</button>
-    }
 }
 
 <p>@rawText</p>
@@ -39,24 +37,28 @@ else
     IBluetoothLE ble = CrossBluetoothLE.Current;
     IAdapter adapter = CrossBluetoothLE.Current.Adapter;
     ICharacteristic? characteristic;
+    Rover Rover = new Rover();
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        await Rover.StartConnect();
+        /*
         bleState = ble.State.ToString();
         ble.StateChanged += (s, e) =>
         {
-            bleState = e.NewState.ToString();
-            StateHasChanged();
+        bleState = e.NewState.ToString();
+        StateHasChanged();
         };
         adapter.DeviceDiscovered += (s, a) => deviceList.Add(a.Device);
         adapter.ScanTimeout = 10000;
         await adapter.StartScanningForDevicesAsync();
+        */
     }
     private async Task OnScanButtonClicked()
     {
         deviceList.Clear();
         var scanFilterOptions = new ScanFilterOptions();
-        scanFilterOptions.DeviceNames = new[] { "M5UiFlow" };
+        scanFilterOptions.DeviceNames = new[] { "Curiosity" };
         await adapter.StartScanningForDevicesAsync(scanFilterOptions);
     }
     private async Task OnButtonClicked(byte command)
