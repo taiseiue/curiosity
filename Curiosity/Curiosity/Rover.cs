@@ -53,7 +53,7 @@ public class Rover
         }
     }
     public string Text { get; set; }
-    public async Task<bool> SendCommandAsync(Command command)
+    public async Task<bool> SendCommandAsync(Curiosity.Command command)
     {
         if (!IsConnected || _cmdCharacteristic == null)
             return false;

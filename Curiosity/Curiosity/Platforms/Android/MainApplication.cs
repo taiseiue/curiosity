@@ -4,6 +4,7 @@ using Android.Runtime;
 namespace Curiosity;
 
 [Application]
+[assembly: Application(UsesCleartextTraffic = true)]
 public class MainApplication : MauiApplication
 {
 	public MainApplication(IntPtr handle, JniHandleOwnership ownership)

@@ -42,6 +42,19 @@ else
     {
         await base.OnInitializedAsync();
         await Rover.StartConnect();
+        try
+        {
+            var hub = await HubClient.ConnectAsync("http://192.168.12.116:8080/command");
+            hub.CommandReceived += async (sender, command) =>
+            {
+                rawText = command.ToString();
+                await Rover.SendCommandAsync(command);
+            };
+        }
+        catch (Exception ex)
+        {
+            rawText = $"Error: {ex.Message}";
+        }
         /*
         bleState = ble.State.ToString();
         ble.StateChanged += (s, e) =>

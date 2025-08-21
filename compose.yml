@@ -1,0 +1,7 @@
+services:
+  app:
+    build:
+      context: ./Curiosity
+      dockerfile: ./Curiosity.Hub/Dockerfile
+    ports:
+      - "8080:8080"

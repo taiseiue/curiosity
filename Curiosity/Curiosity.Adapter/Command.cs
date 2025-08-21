@@ -1,3 +1,5 @@
+namespace Curiosity;
+
 public enum Command
 {
     Stop = 0,
