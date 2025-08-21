@@ -3,19 +3,31 @@
 @using Plugin.BLE.Abstractions
 @using Plugin.BLE.Abstractions.Contracts
 @using Plugin.BLE.Abstractions.Exceptions
+@using System.Text.Unicode
+@using System.Text
 
-<h1>Hello, world!</h1>
+<h1>Curiosityへようこそ!</h1>
 
-Welcome to your new app.
-
-<p>Bluetooth state: @bleState</p>
-
-
-<button class="btn btn-primary" @onclick="OnScanButtonClicked">デバイスのスキャン</button>
-<hr />
-@foreach (var device in deviceList)
+@if (characteristic != null)
 {
-    <button class="btn btn-secondary" @onclick="() => OnDeviceSelected(device)">@device.Name (@device.Id)</button>
+    <button class="btn btn-secondary" @onclick="() => OnButtonClicked(0x01)">停止</button>
+    <button class="btn btn-secondary" @onclick="() => OnButtonClicked(0x02)">前進</button>
+    <button class="btn btn-secondary" @onclick="() => OnButtonClicked(0x03)">後退</button>
+    <button class="btn btn-secondary" @onclick="() => OnButtonClicked(0x04)">右回転</button>
+    <button class="btn btn-secondary" @onclick="() => OnButtonClicked(0x05)">左回転</button>
+    <button class="btn btn-secondary" @onclick="() => OnButtonClicked(0x06)">右移動</button>
+    <button class="btn btn-secondary" @onclick="() => OnButtonClicked(0x07)">左移動</button>
+}
+else
+{
+    <p>デバイスに接続されていません。</p>
+    <p>Bluetooth state: @bleState</p>
+    <button class="btn btn-primary" @onclick="OnScanButtonClicked">デバイスのスキャン</button>
+    <hr />
+    @foreach (var device in deviceList.Where(device => device.Name != null))
+    {
+        <button class="btn btn-secondary" @onclick="() => OnDeviceSelected(device)">@device.Name (@device.Id)</button>
+    }
 }
 
 <p>@rawText</p>
@@ -26,6 +38,7 @@ Welcome to your new app.
     List<IDevice> deviceList = new List<IDevice>();
     IBluetoothLE ble = CrossBluetoothLE.Current;
     IAdapter adapter = CrossBluetoothLE.Current.Adapter;
+    ICharacteristic? characteristic;
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
@@ -36,35 +49,32 @@ Welcome to your new app.
             StateHasChanged();
         };
         adapter.DeviceDiscovered += (s, a) => deviceList.Add(a.Device);
+        adapter.ScanTimeout = 10000;
         await adapter.StartScanningForDevicesAsync();
     }
     private async Task OnScanButtonClicked()
     {
         deviceList.Clear();
-        await adapter.StartScanningForDevicesAsync();
+        var scanFilterOptions = new ScanFilterOptions();
+        scanFilterOptions.DeviceNames = new[] { "M5UiFlow" };
+        await adapter.StartScanningForDevicesAsync(scanFilterOptions);
+    }
+    private async Task OnButtonClicked(byte command)
+    {
+        await characteristic.WriteAsync(new byte[] { command });
     }
     private async Task OnDeviceSelected(IDevice device)
     {
         try
         {
             await adapter.ConnectToDeviceAsync(device);
-            var services = await device.GetServicesAsync();
-            var characteristics = await services[0].GetCharacteristicsAsync();
-            foreach (var characteristic in characteristics)
-            {
-                characteristic.ValueUpdated += (o, args) =>
-                {
-                    var bytes = args.Characteristic.Value;
-                    rawText = System.Text.Encoding.UTF8.GetString(bytes);
-                    StateHasChanged();
-                };
-                await characteristic.StartUpdatesAsync();
-            }
-
+            var service = await device.GetServiceAsync(Guid.Parse("12345678-1234-5678-9012-123456789abc"));
+            characteristic = await service.GetCharacteristicAsync(Guid.Parse("87654321-4321-8765-2109-cba987654321"));
         }
-        catch (DeviceConnectionException e)
+        catch (Exception e)
         {
             // ... could not connect to device
+            rawText = $"Connection failed: {e.Message}";
         }
     }
 }
