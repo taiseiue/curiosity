@@ -21,6 +21,8 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.MapHub<CommandHub>("/command");
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseAuthorization();
 
 app.MapStaticAssets();

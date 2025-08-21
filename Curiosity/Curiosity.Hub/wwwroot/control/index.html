@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ラジコン操作画面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .controller {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .title {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 80px);
+            grid-template-rows: repeat(3, 80px);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .control-btn {
+            background: linear-gradient(145deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn:active::before {
+            width: 120%;
+            height: 120%;
+        }
+
+        .control-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* グリッド配置 */
+        .btn-forward-left {
+            grid-area: 1 / 1 / 2 / 2;
+        }
+
+        .btn-forward {
+            grid-area: 1 / 2 / 2 / 3;
+        }
+
+        .btn-forward-right {
+            grid-area: 1 / 3 / 2 / 4;
+        }
+
+        .btn-left {
+            grid-area: 2 / 1 / 3 / 2;
+        }
+
+        .btn-center {
+            grid-area: 2 / 2 / 3 / 3;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: default;
+        }
+
+        .btn-right {
+            grid-area: 2 / 3 / 3 / 4;
+        }
+
+        .btn-backward-left {
+            grid-area: 3 / 1 / 4 / 2;
+        }
+
+        .btn-backward {
+            grid-area: 3 / 2 / 4 / 3;
+        }
+
+        .btn-backward-right {
+            grid-area: 3 / 3 / 4 / 4;
+        }
+
+        .btn-center {
+            background: linear-gradient(145deg, #ff6b6b 0%, #feca57 100%);
+            font-size: 20px;
+        }
+
+        .status {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .status-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .connection-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .indicator-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .speed-control {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .speed-slider {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            outline: none;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+
+        .speed-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #4facfe 0%, #00f2fe 100%);
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 480px) {
+            .controller {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .controls-grid {
+                grid-template-columns: repeat(3, 70px);
+                grid-template-rows: repeat(3, 70px);
+            }
+
+            .control-btn {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="controller">
+        <h1 class="title">🚗 ラジコン操作パネル</h1>
+
+        <div class="controls-grid">
+            <button class="control-btn btn-forward-left" data-direction="forward-left"
+                onclick="connection.invoke('SendCommandAsync', 2);">↖</button>
+            <button class="control-btn btn-forward" data-direction="forward"
+                onclick="connection.invoke('SendCommandAsync', 1);">↑</button>
+            <button class="control-btn btn-forward-right" data-direction="forward-right"
+                onclick="connection.invoke('SendCommandAsync', 3);">↗</button>
+
+            <button class="control-btn btn-left" data-direction="left"
+                onclick="connection.invoke('SendCommandAsync', 7);">←</button>
+            <button class="control-btn btn-center" onclick="connection.invoke('SendCommandAsync', 0);">⏹</button>
+            <button class="control-btn btn-right" data-direction="right"
+                onclick="connection.invoke('SendCommandAsync', 8);">→</button>
+
+            <button class="control-btn btn-backward-left" data-direction="backward-left"
+                onclick="connection.invoke('SendCommandAsync', 5);">↙</button>
+            <button class="control-btn btn-backward" data-direction="backward"
+                onclick="connection.invoke('SendCommandAsync', 4);">↓</button>
+            <button class="control-btn btn-backward-right" data-direction="backward-right"
+                onclick="connection.invoke('SendCommandAsync', 6);">↘</button>
+        </div>
+
+        <div class="status">
+            <div class="status-text" id="status-text">待機中</div>
+            <div class="connection-indicator">
+                <span class="indicator-dot"></span>
+                <span>接続中</span>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
+    <script type="text/javascript">
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("http://192.168.12.116:8080/command")
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
+
+        async function start() {
+            try {
+                await connection.start();
+                console.log("SignalR Connected.");
+            } catch (err) {
+                console.log(err);
+                setTimeout(start, 5000);
+            }
+        };
+
+        connection.onclose(async () => {
+            await start();
+        });
+
+        // Start the connection.
+        start();
+    </script>
+    <script>
+        // 操作状態の管理
+        let currentDirection = null;
+        let currentSpeed = 5;
+
+        // DOM要素の取得
+        const statusText = document.getElementById('status-text');
+        const speedSlider = document.getElementById('speed');
+        const speedValue = document.getElementById('speed-value');
+        const controlButtons = document.querySelectorAll('.control-btn[data-direction]');
+
+        // 方向名の日本語マッピング
+        const directionNames = {
+            'forward': '前進',
+            'backward': '後退',
+            'left': '左',
+            'right': '右',
+            'forward-left': '左前',
+            'forward-right': '右前',
+            'backward-left': '左後ろ',
+            'backward-right': '右後ろ'
+        };
+
+        // スピード調整
+        speedSlider.addEventListener('input', (e) => {
+            speedValue.textContent = currentSpeed;
+            if (currentDirection) {
+                updateStatus(`${directionNames[currentDirection]}`);
+            }
+        });
+
+        // ボタンイベントの設定
+        controlButtons.forEach(button => {
+            const direction = button.dataset.direction;
+
+            // マウス/タッチイベント
+            button.addEventListener('mousedown', () => startMovement(direction));
+            button.addEventListener('mouseup', stopMovement);
+            button.addEventListener('mouseleave', stopMovement);
+
+            button.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startMovement(direction);
+            });
+            button.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                stopMovement();
+            });
+
+            // キーボードサポート
+            button.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' || e.code === 'Enter') {
+                    e.preventDefault();
+                    startMovement(direction);
+                }
+            });
+            button.addEventListener('keyup', (e) => {
+                if (e.code === 'Space' || e.code === 'Enter') {
+                    e.preventDefault();
+                    stopMovement();
+                }
+            });
+        });
+
+        // キーボード操作
+        document.addEventListener('keydown', (e) => {
+            if (currentDirection) return; // 既に動いている場合はスキップ
+
+            let direction = null;
+            switch (e.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    direction = 'forward';
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    direction = 'backward';
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    direction = 'left';
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    direction = 'right';
+                    break;
+                case 'KeyQ':
+                    direction = 'forward-left';
+                    break;
+                case 'KeyE':
+                    direction = 'forward-right';
+                    break;
+                case 'KeyZ':
+                    direction = 'backward-left';
+                    break;
+                case 'KeyC':
+                    direction = 'backward-right';
+                    break;
+            }
+
+            if (direction) {
+                e.preventDefault();
+                startMovement(direction);
+                highlightButton(direction);
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            const keyCodes = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'KeyZ', 'KeyC'];
+            if (keyCodes.includes(e.code)) {
+                e.preventDefault();
+                stopMovement();
+                removeHighlight();
+            }
+        });
+
+        // 移動開始
+        function startMovement(direction) {
+            if (currentDirection === direction) return;
+
+            currentDirection = direction;
+            updateStatus(`${directionNames[direction]} - 速度${currentSpeed}`);
+
+            // ここで実際のラジコン制御のAPIを呼び出す
+            sendCommand(direction, currentSpeed);
+        }
+
+        // 移動停止
+        function stopMovement() {
+            if (!currentDirection) return;
+
+            currentDirection = null;
+            updateStatus('待機中');
+
+            // 停止コマンドの送信
+            sendCommand('stop', 0);
+        }
+
+        // ステータス更新
+        function updateStatus(message) {
+            statusText.textContent = message;
+        }
+
+        // ボタンのハイライト
+        function highlightButton(direction) {
+            const button = document.querySelector(`[data-direction="${direction}"]`);
+            if (button) {
+                button.style.transform = 'translateY(0)';
+                button.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+            }
+        }
+
+        function removeHighlight() {
+            controlButtons.forEach(button => {
+                button.style.transform = '';
+                button.style.boxShadow = '';
+            });
+        }
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStatus('待機中');
+            console.log('ラジコン操作パネルが初期化されました');
+            console.log('キーボード操作: WASD, 矢印キー, Q(左前), E(右前), Z(左後ろ), C(右後ろ)');
+        });
+
+        // ページ離脱時の停止処理
+        window.addEventListener('beforeunload', () => {
+            if (currentDirection) {
+                connection.invoke('SendCommandAsync', 0);
+            }
+        });
+    </script>
+</body>
+
+</html>
