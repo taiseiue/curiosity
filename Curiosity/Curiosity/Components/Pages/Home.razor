@@ -50,6 +50,7 @@ else
                 rawText = command.ToString();
                 await Rover.SendCommandAsync(command);
             };
+            rawText = "Connection OK.";
         }
         catch (Exception ex)
         {
