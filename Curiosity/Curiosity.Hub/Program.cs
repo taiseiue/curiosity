@@ -5,6 +5,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
+builder.Services.AddControllers();
+builder.Services.Configure<IISServerOptions>(options =>
+       {
+           options.MaxRequestBodySize = 20 * 1024 * 1024; // 20MB
+       });
+
 
 var app = builder.Build();
 
@@ -26,6 +32,7 @@ app.UseStaticFiles();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+app.MapControllers();
 app.MapRazorPages()
    .WithStaticAssets();
 

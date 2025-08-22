@@ -5,6 +5,8 @@
 @using Plugin.BLE.Abstractions.Exceptions
 @using System.Text.Unicode
 @using System.Text
+@using System.Net
+@using System.Timers
 
 <h1>Curiosityへようこそ!</h1>
 
@@ -20,6 +22,8 @@
     <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Reset)">リセット</button>
     <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Kill)">キル</button>
     <hr />
+    <img src="@($"data:image/png;base64,{currentImageBase64}")" alt="Rover Camera" style="max-width: 100%; height: auto;" />
+    <hr />
     <h3>@Rover.Temperature</h3>
     <p>@Rover.Text</p>
 }
@@ -33,11 +37,14 @@ else
 @code {
     string bleState = "Unknown";
     string rawText = "No data received yet.";
+    string currentImageBase64 = "";
+    Timer timer;
     List<IDevice> deviceList = new List<IDevice>();
     IBluetoothLE ble = CrossBluetoothLE.Current;
     IAdapter adapter = CrossBluetoothLE.Current.Adapter;
     ICharacteristic? characteristic;
     Rover Rover = new Rover();
+    HttpClient httpClient = new HttpClient();
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
@@ -57,6 +64,57 @@ else
         {
             rawText = $"Error: {ex.Message}";
         }
+        var camera = new CameraService();
+        camera.PhotoCaptured += async (sender, data) =>
+        {
+            using var form = new MultipartFormDataContent();
+            using var streamContent = new StreamContent(new MemoryStream(data));
+            
+            // Content-Typeを設定（必要に応じて）
+            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+            
+            // フォームデータとしてファイルを追加
+            form.Add(streamContent, "file", "A.jpg");
+            
+            // 追加のフィールドがあれば追加可能
+            form.Add(new StringContent("画像の説明"), "description");
+
+            Console.WriteLine("画像を送信中...");
+            
+            // POST送信
+
+            try
+            {
+                // 4. POSTリクエストを送信
+                HttpResponseMessage response = await httpClient.PostAsync("http://192.168.12.116:8080/api/picture", form);
+
+                // 5. レスポンスを確認
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine("ファイルアップロード成功！");
+                    Console.WriteLine("サーバーからのレスポンス: " + responseBody);
+                }
+                else
+                {
+                    string errorBody = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"エラーが発生しました: {response.StatusCode}");
+                    Console.WriteLine("エラー詳細: " + errorBody);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"予期せぬエラーが発生しました: {ex.Message}");
+            }
+            rawText = "Uploaded!!";
+            StateHasChanged();
+        };
+        timer = new Timer(10000);
+        timer.Elapsed += async (sender, e) =>
+        {
+            await camera.CapturePhotoAsync();
+        };
+        timer.Start();
         /*
         bleState = ble.State.ToString();
         ble.StateChanged += (s, e) =>
