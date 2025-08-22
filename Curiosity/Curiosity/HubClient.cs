@@ -9,21 +9,25 @@ public class HubClient : IDirectionClient, IHubConnectionObserver, IDisposable
 {
     public event DirectionReceivedEventHandler? DirectionReceived;
     public HubConnection? Connection { get; private set; }
+    public IDirectionHub? Hub { get; set; }
     public static async Task<HubClient> ConnectAsync(string address)
     {
         HubConnection connection = new HubConnectionBuilder().WithUrl(address).Build();
         var hub = connection.CreateHubProxy<IDirectionHub>();
-
         HubClient client = new()
         {
-            Connection = connection
+            Connection = connection,
+            Hub = hub
         };
         connection.Register<IDirectionClient>(client);
 
         await connection.StartAsync();
         return client;
     }
-
+    public async Task SetDirectionAsync(MotorDirection direction)
+    {
+        await Hub.SetDirectionAsync(direction);
+    }
     public void Dispose()
     {
         Connection.DisposeAsync().GetAwaiter().GetResult();

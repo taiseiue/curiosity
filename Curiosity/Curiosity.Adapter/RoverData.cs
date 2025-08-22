@@ -108,7 +108,7 @@ public enum MotorState
     On,
     Reverse
 }
-public enum MotorDirection
+public enum MotorDirection : byte
 {
     Forward = 0b10101010,
     Backward = 0b01010101,
