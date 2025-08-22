@@ -9,9 +9,4 @@ public class CommandHub : Hub<IDirectionClient>, IDirectionHub
         Console.WriteLine($"Setting direction to {direction}");
         return Clients.All.ReceiveDirectionAsync(direction);
     }
-    public Task SetDirectionAsync(byte direction)
-    {
-        Console.WriteLine($"Setting direction to {(MotorDirection)direction}");
-        return SetDirectionAsync((MotorDirection)direction);
-    }
 }
