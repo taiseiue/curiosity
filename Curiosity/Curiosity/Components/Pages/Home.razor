@@ -53,12 +53,12 @@ else
         try
         {
            HubClient hub = await HubClient.ConnectAsync("http://192.168.12.116:8080/command");
-            hub.CommandReceived += async (sender, command) =>
+            hub.DirectionReceived += async (sender, direction) =>
             {
-                rawText = command.ToString();
-                await Rover.SendCommandAsync(command);
+                rawText = direction.ToString();
+                await Rover.Move(direction);
             };
-            await hub.ReceiveCommandAsync(Command.Stop);
+            await hub.SetDirectionAsync(MotorDirection.Stop);
             rawText = "Connection OK.";
         }
         catch (Exception ex)
@@ -68,7 +68,6 @@ else
         var camera = new CameraService();
         camera.PhotoCaptured += async (sender, data) =>
         {
-            
             StateHasChanged();
         };
         timer = new Timer(10000);

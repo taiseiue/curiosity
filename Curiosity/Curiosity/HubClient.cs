@@ -7,7 +7,7 @@ namespace Curiosity;
 
 public class HubClient : ICommandClient, IHubConnectionObserver, IDisposable
 {
-    public event CommandReceivedEventHandler? CommandReceived;
+    public event DirectionReceivedEventHandler? DirectionReceived;
     public HubConnection? Connection { get; private set; }
     public static async Task<HubClient> ConnectAsync(string address)
     {
@@ -44,10 +44,10 @@ public class HubClient : ICommandClient, IHubConnectionObserver, IDisposable
         throw new NotImplementedException();
     }
 
-    public Task ReceiveCommandAsync(Command command)
+    public Task ReceiveDirectionAsync(MotorDirection direction)
     {
-        CommandReceived?.Invoke(this, command);
+        DirectionReceived?.Invoke(this, direction);
         return Task.CompletedTask;
     }
 }
-public delegate void CommandReceivedEventHandler(HubClient sender, Command cmd);
+public delegate void DirectionReceivedEventHandler(HubClient sender, MotorDirection direction);
