@@ -52,7 +52,7 @@ else
         await Rover.Move(MotorDirection.Forward);
         try
         {
-           HubClient hub = await HubClient.ConnectAsync("http://192.168.12.116:8080/command");
+           HubClient hub = await HubClient.ConnectAsync("https://rover-hub.taiseiue.jp/command");
             hub.DirectionReceived += async (sender, direction) =>
             {
                 rawText = direction.ToString();

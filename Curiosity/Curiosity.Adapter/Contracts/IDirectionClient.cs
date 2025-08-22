@@ -1,6 +1,6 @@
 namespace Curiosity;
 
-public interface ICommandClient
+public interface IDirectionClient
 {
     Task ReceiveDirectionAsync(MotorDirection direction);
 }

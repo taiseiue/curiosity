@@ -4,4 +4,4 @@ services:
       context: ./Curiosity
       dockerfile: ./Curiosity.Hub/Dockerfile
     ports:
-      - "8080:8080"
+      - "9798:8080"

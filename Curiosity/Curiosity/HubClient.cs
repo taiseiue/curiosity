@@ -5,20 +5,20 @@ using TypedSignalR.Client;
 
 namespace Curiosity;
 
-public class HubClient : ICommandClient, IHubConnectionObserver, IDisposable
+public class HubClient : IDirectionClient, IHubConnectionObserver, IDisposable
 {
     public event DirectionReceivedEventHandler? DirectionReceived;
     public HubConnection? Connection { get; private set; }
     public static async Task<HubClient> ConnectAsync(string address)
     {
         HubConnection connection = new HubConnectionBuilder().WithUrl(address).Build();
-        var hub = connection.CreateHubProxy<ICommandHub>();
+        var hub = connection.CreateHubProxy<IDirectionHub>();
 
         HubClient client = new()
         {
             Connection = connection
         };
-        connection.Register<ICommandClient>(client);
+        connection.Register<IDirectionClient>(client);
 
         await connection.StartAsync();
         return client;

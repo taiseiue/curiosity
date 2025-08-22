@@ -1,6 +1,6 @@
 namespace Curiosity;
 
-public interface ICommandHub
+public interface IDirectionHub
 {
     Task SetDirectionAsync(MotorDirection direction);
 }

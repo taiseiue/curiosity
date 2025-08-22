@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Curiosity.Hub;
 
-public class CommandHub : Hub<ICommandClient>, ICommandHub
+public class CommandHub : Hub<IDirectionClient>, IDirectionHub
 {
-    public Task SendCommandAsync(Command command)
+    public Task SetDirectionAsync(MotorDirection direction)
     {
-        return Clients.All.ReceiveCommandAsync(command);
+        return Clients.All.ReceiveDirectionAsync(direction);
     }
 }

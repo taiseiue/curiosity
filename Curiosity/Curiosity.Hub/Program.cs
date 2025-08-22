@@ -10,7 +10,15 @@ builder.Services.Configure<IISServerOptions>(options =>
        {
            options.MaxRequestBodySize = 20 * 1024 * 1024; // 20MB
        });
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "MyOriginPolicy",
+                      policy =>
+                      {
+                          policy.WithOrigins("https://curiosity.taiseiue.jp",
+                                              "https://rover-hub.taiseiue.jp");
+                      });
+});
 
 var app = builder.Build();
 
