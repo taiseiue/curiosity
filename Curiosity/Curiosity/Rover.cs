@@ -35,9 +35,17 @@ public class Rover
         var service = await _device.GetServiceAsync(Guid.Parse(ServiceGuid));
         _cmdCharacteristic = await service.GetCharacteristicAsync(Guid.Parse(CmdGuid));
         _tmpCharacteristic = await service.GetCharacteristicAsync(Guid.Parse(TmpGuid));
+
         _tmpCharacteristic.ValueUpdated += (s, a) =>
         {
-            Data = RoverData.Parse(Encoding.UTF8.GetString(a.Characteristic.Value));
+            string[] kvData = Encoding.UTF8.GetString(a.Characteristic.Value).Split(',');
+            if (kvData.Length > 1)
+            {
+                if (kvData[0] == "0")
+                {
+                    Data.Id = kvData[1];
+                }
+            }
         };
         await _tmpCharacteristic.StartUpdatesAsync();
     }
