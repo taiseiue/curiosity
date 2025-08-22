@@ -234,24 +234,24 @@
 
         <div class="controls-grid">
             <button class="control-btn btn-forward-left" data-direction="forward-left"
-                onclick="connection.invoke('SendCommandAsync', 2);">↖</button>
+                onclick="connection.invoke('SetDirectionAsync', 40);">↖</button>
             <button class="control-btn btn-forward" data-direction="forward"
-                onclick="connection.invoke('SendCommandAsync', 1);">↑</button>
+                onclick="connection.invoke('SetDirectionAsync', 170);">↑</button>
             <button class="control-btn btn-forward-right" data-direction="forward-right"
-                onclick="connection.invoke('SendCommandAsync', 3);">↗</button>
+                onclick="connection.invoke('SetDirectionAsync', 130);">↗</button>
 
             <button class="control-btn btn-left" data-direction="left"
-                onclick="connection.invoke('SendCommandAsync', 7);">←</button>
-            <button class="control-btn btn-center" onclick="connection.invoke('SendCommandAsync', 0);">⏹</button>
+                onclick="connection.invoke('SetDirectionAsync', 105);">←</button>
+            <button class="control-btn btn-center" onclick="connection.invoke('SetDirectionAsync', 0);">⏹</button>
             <button class="control-btn btn-right" data-direction="right"
-                onclick="connection.invoke('SendCommandAsync', 8);">→</button>
+                onclick="connection.invoke('SetDirectionAsync', 150);">→</button>
 
             <button class="control-btn btn-backward-left" data-direction="backward-left"
-                onclick="connection.invoke('SendCommandAsync', 5);">↙</button>
+                onclick="connection.invoke('SetDirectionAsync', 65);">↙</button>
             <button class="control-btn btn-backward" data-direction="backward"
-                onclick="connection.invoke('SendCommandAsync', 4);">↓</button>
+                onclick="connection.invoke('SetDirectionAsync', 85);">↓</button>
             <button class="control-btn btn-backward-right" data-direction="backward-right"
-                onclick="connection.invoke('SendCommandAsync', 6);">↘</button>
+                onclick="connection.invoke('SetDirectionAsync', 20);">↘</button>
         </div>
 
         <div class="status">
@@ -265,7 +265,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
     <script type="text/javascript">
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl("http://192.168.12.116:8080/command")
+            .withUrl("https://rover-hub.taiseiue.jp/command")
             .configureLogging(signalR.LogLevel.Information)
             .build();
 
