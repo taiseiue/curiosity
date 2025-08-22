@@ -1,6 +1,7 @@
 using System.Text;
 using Plugin.BLE;
 using Plugin.BLE.Abstractions.Contracts;
+using Curiosity;
 
 public class Rover
 {
@@ -25,7 +26,7 @@ public class Rover
     }
     public bool IsConnected => _adapter.ConnectedDevices.Count > 0;
     public bool Enable { get; set; } = true;
-    public int Temperature { get; set; }
+    public RoverData Data { get; set; } = new RoverData();
     public Guid DeviceGuid { get; set; } = new Guid("00000000-0000-0000-0000-84cca860fefa");
     private IDevice? _device;
     public async Task ConnectAsync()
@@ -36,8 +37,7 @@ public class Rover
         _tmpCharacteristic = await service.GetCharacteristicAsync(Guid.Parse(TmpGuid));
         _tmpCharacteristic.ValueUpdated += (s, a) =>
         {
-
-            Text = Encoding.UTF8.GetString(a.Characteristic.Value);
+            Data = RoverData.Parse(Encoding.UTF8.GetString(a.Characteristic.Value));
         };
         await _tmpCharacteristic.StartUpdatesAsync();
     }
@@ -52,7 +52,6 @@ public class Rover
             catch { }
         }
     }
-    public string Text { get; set; }
     public async Task<bool> SendCommandAsync(Curiosity.Command command)
     {
         if (!IsConnected || _cmdCharacteristic == null)

@@ -24,12 +24,17 @@
     <hr />
     <img src="@($"data:image/png;base64,{currentImageBase64}")" alt="Rover Camera" style="max-width: 100%; height: auto;" />
     <hr />
-    <h3>@Rover.Temperature</h3>
-    <p>@Rover.Text</p>
+    <h3>ローバーの状態</h3>
+    <p>稼働時間: @Rover.Data.Uptime 秒</p>
+    <p>バッテリー残量: @Rover.Data.BatteryLevel %</p>
+    <p>温度: @Rover.Data.Temperature °C</p>
+    <p>気圧: @Rover.Data.Pressure hPa</p>
+    <p>湿度: @Rover.Data.Humidity %</p>
+    <p>距離: @Rover.Data.Distance mm</p>
 }
 else
 {
-    <p>デバイスに接続されていません。</p>
+    <p>ローバーに接続されていません。</p>
 }
 
 <p>@rawText</p>
@@ -75,9 +80,14 @@ else
             
             // フォームデータとしてファイルを追加
             form.Add(streamContent, "file", "A.jpg");
-            
-            // 追加のフィールドがあれば追加可能
-            form.Add(new StringContent("画像の説明"), "description");
+
+            form.Add(new StringContent(Rover.Data.Id), "id");
+            form.Add(new StringContent(Rover.Data.Uptime.ToString()), "uptime");
+            form.Add(new StringContent(Rover.Data.BatteryLevel.ToString()), "batteryLevel");
+            form.Add(new StringContent(Rover.Data.Temperature.ToString()), "temperature");
+            form.Add(new StringContent(Rover.Data.Pressure.ToString()), "pressure");
+            form.Add(new StringContent(Rover.Data.Humidity.ToString()), "humidity");
+            form.Add(new StringContent(Rover.Data.Distance.ToString()), "distance");
 
             Console.WriteLine("画像を送信中...");
             
