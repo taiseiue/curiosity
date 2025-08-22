@@ -17,18 +17,24 @@ public class RoverData
     public bool IsCatching { get; set; }
     public byte LedBrightness { get; set; }
     public byte Motor { get; set; }
+    public MotorDirection Direction
+    {
+        get
+        {
+            return (MotorDirection)Motor;
+        }
+        set
+        {
+            Motor = (byte)value;
+        }
+    }
 
     public MotorState MotorFrontLeft
     {
         get
         {
             byte mask = 0b10000000;
-            if ((Motor ^ mask) / mask <= 0)
-                return MotorState.Off;
-            mask >>= 1;
-            if ((Motor ^ mask) / mask > 0)
-                return MotorState.Reverse;
-            return MotorState.On;
+            return GetMotorState(mask);
         }
         set
         {
@@ -41,12 +47,7 @@ public class RoverData
         get
         {
             byte mask = 0b00100000;
-            if ((Motor ^ mask) / mask <= 0)
-                return MotorState.Off;
-            mask >>= 1;
-            if ((Motor ^ mask) / mask > 0)
-                return MotorState.Reverse;
-            return MotorState.On;
+            return GetMotorState(mask);
         }
         set
         {
@@ -60,12 +61,7 @@ public class RoverData
         get
         {
             byte mask = 0b00001000;
-            if ((Motor ^ mask) / mask <= 0)
-                return MotorState.Off;
-            mask >>= 1;
-            if ((Motor ^ mask) / mask > 0)
-                return MotorState.Reverse;
-            return MotorState.On;
+            return GetMotorState(mask);
         }
         set
         {
@@ -78,18 +74,22 @@ public class RoverData
         get
         {
             byte mask = 0b00000010;
-            if ((Motor ^ mask) / mask <= 0)
-                return MotorState.Off;
-            mask >>= 1;
-            if ((Motor ^ mask) / mask > 0)
-                return MotorState.Reverse;
-            return MotorState.On;
+            return GetMotorState(mask);
         }
         set
         {
             Motor = SetBitWithBool(Motor, 1, value != MotorState.Off);
             Motor = SetBitWithBool(Motor, 0, value == MotorState.Reverse);
         }
+    }
+    private MotorState GetMotorState(byte mask)
+    {
+        if ((Motor ^ mask) / mask <= 0)
+            return MotorState.Off;
+        mask >>= 1;
+        if ((Motor ^ mask) / mask > 0)
+            return MotorState.Reverse;
+        return MotorState.On;
     }
     private byte SetBitWithBool(byte value, byte bit_pos, bool new_value)
     {
@@ -107,4 +107,18 @@ public enum MotorState
     Off,
     On,
     Reverse
+}
+public enum MotorDirection
+{
+    Forward = 0b10101010,
+    Backward = 0b01010101,
+    Left = 0b01101001,
+    Right = 0b10010110,
+    LeftForward = 0b00101000,
+    LeftBackward = 0b01000001,
+    RightForward = 0b10000010,
+    RightBackward = 0b00010100,
+    TurnLeft = 0b10100101,
+    TurnRight = 0b01101001,
+    Stop = 0b00000000
 }

@@ -10,17 +10,15 @@
 
 <h1>Curiosityへようこそ!</h1>
 
-@if (Rover.IsConnected)
+@if (Rover!=null)
 {
-    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Stop)">停止</button>
-    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Forward)">前進</button>
-    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Backward)">後退</button>
-    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.TurnRight)">右回転</button>
-    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.TurnLeft)">左回転</button>
-    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Right)">右移動</button>
-    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Left)">左移動</button>
-    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Reset)">リセット</button>
-    <button class="btn btn-secondary" @onclick="() => Rover.SendCommandAsync(Command.Kill)">キル</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.Move(MotorDirection.Stop)">停止</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.Move(MotorDirection.Forward)">前進</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.Move(MotorDirection.Backward)">後退</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.Move(MotorDirection.TurnRight)">右回転</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.Move(MotorDirection.TurnLeft)">左回転</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.Move(MotorDirection.Right)">右移動</button>
+    <button class="btn btn-secondary" @onclick="() => Rover.Move(MotorDirection.Left)">左移動</button>
     <hr />
     <img src="@($"data:image/png;base64,{currentImageBase64}")" alt="Rover Camera" style="max-width: 100%; height: auto;" />
     <hr />
@@ -44,19 +42,17 @@ else
     string rawText = "No data received yet.";
     string currentImageBase64 = "";
     Timer timer;
-    List<IDevice> deviceList = new List<IDevice>();
-    IBluetoothLE ble = CrossBluetoothLE.Current;
-    IAdapter adapter = CrossBluetoothLE.Current.Adapter;
-    ICharacteristic? characteristic;
     Rover Rover = new Rover();
-    HttpClient httpClient = new HttpClient();
+    APIClient apiClient = new APIClient("http://192.168.12.116:8080");
+    
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
         await Rover.StartConnect();
+        await Rover.Move(MotorDirection.Forward);
         try
         {
-            var hub = await HubClient.ConnectAsync("http://192.168.12.116:8080/command");
+           HubClient hub = await HubClient.ConnectAsync("http://192.168.12.116:8080/command");
             hub.CommandReceived += async (sender, command) =>
             {
                 rawText = command.ToString();
@@ -72,51 +68,7 @@ else
         var camera = new CameraService();
         camera.PhotoCaptured += async (sender, data) =>
         {
-            using var form = new MultipartFormDataContent();
-            using var streamContent = new StreamContent(new MemoryStream(data));
             
-            // Content-Typeを設定（必要に応じて）
-            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
-            
-            // フォームデータとしてファイルを追加
-            form.Add(streamContent, "file", "A.jpg");
-
-            form.Add(new StringContent(Rover.Data.Id), "id");
-            form.Add(new StringContent(Rover.Data.Uptime.ToString()), "uptime");
-            form.Add(new StringContent(Rover.Data.BatteryLevel.ToString()), "batteryLevel");
-            form.Add(new StringContent(Rover.Data.Temperature.ToString()), "temperature");
-            form.Add(new StringContent(Rover.Data.Pressure.ToString()), "pressure");
-            form.Add(new StringContent(Rover.Data.Humidity.ToString()), "humidity");
-            form.Add(new StringContent(Rover.Data.Distance.ToString()), "distance");
-
-            Console.WriteLine("画像を送信中...");
-            
-            // POST送信
-
-            try
-            {
-                // 4. POSTリクエストを送信
-                HttpResponseMessage response = await httpClient.PostAsync("http://192.168.12.116:8080/api/picture", form);
-
-                // 5. レスポンスを確認
-                if (response.IsSuccessStatusCode)
-                {
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine("ファイルアップロード成功！");
-                    Console.WriteLine("サーバーからのレスポンス: " + responseBody);
-                }
-                else
-                {
-                    string errorBody = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"エラーが発生しました: {response.StatusCode}");
-                    Console.WriteLine("エラー詳細: " + errorBody);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"予期せぬエラーが発生しました: {ex.Message}");
-            }
-            rawText = "Uploaded!!";
             StateHasChanged();
         };
         timer = new Timer(10000);
@@ -125,41 +77,5 @@ else
             await camera.CapturePhotoAsync();
         };
         timer.Start();
-        /*
-        bleState = ble.State.ToString();
-        ble.StateChanged += (s, e) =>
-        {
-        bleState = e.NewState.ToString();
-        StateHasChanged();
-        };
-        adapter.DeviceDiscovered += (s, a) => deviceList.Add(a.Device);
-        adapter.ScanTimeout = 10000;
-        await adapter.StartScanningForDevicesAsync();
-        */
-    }
-    private async Task OnScanButtonClicked()
-    {
-        deviceList.Clear();
-        var scanFilterOptions = new ScanFilterOptions();
-        scanFilterOptions.DeviceNames = new[] { "Curiosity" };
-        await adapter.StartScanningForDevicesAsync(scanFilterOptions);
-    }
-    private async Task OnButtonClicked(byte command)
-    {
-        await characteristic.WriteAsync(new byte[] { command });
-    }
-    private async Task OnDeviceSelected(IDevice device)
-    {
-        try
-        {
-            await adapter.ConnectToDeviceAsync(device);
-            var service = await device.GetServiceAsync(Guid.Parse("12345678-1234-5678-9012-123456789abc"));
-            characteristic = await service.GetCharacteristicAsync(Guid.Parse("87654321-4321-8765-2109-cba987654321"));
-        }
-        catch (Exception e)
-        {
-            // ... could not connect to device
-            rawText = $"Connection failed: {e.Message}";
-        }
     }
 }

@@ -5,12 +5,20 @@ using Curiosity;
 
 public class Rover
 {
-    const string ServiceGuid = "0c0e1df3-0007-4d0e-9ff6-7c8eb9e98f2f";
-    const string CmdGuid = "0d58e717-57c0-4b0e-9723-c5e41e095897";
-    const string TmpGuid = "522bf40e-a020-4d92-b4c5-172fa16c667a";
     IAdapter _adapter = CrossBluetoothLE.Current.Adapter;
-    ICharacteristic? _cmdCharacteristic;
-    ICharacteristic? _tmpCharacteristic;
+    ICharacteristic? idCharacteristic;
+    ICharacteristic? voltageCharacteristic;
+    ICharacteristic? batteryLevelCharacteristic;
+    ICharacteristic? isChargingCharacteristic;
+    ICharacteristic? uptimeCharacteristic;
+    ICharacteristic? temperatureCharacteristic;
+    ICharacteristic? pressureCharacteristic;
+    ICharacteristic? humidityCharacteristic;
+    ICharacteristic? distanceCharacteristic;
+    ICharacteristic? motorCharacteristic;
+    ICharacteristic? isCatchingCharacteristic;
+    ICharacteristic? ledBrightnessCharacteristic;
+
     public Rover()
     {
         _adapter.DeviceConnected += (s, a) =>
@@ -32,22 +40,39 @@ public class Rover
     public async Task ConnectAsync()
     {
         _device = await _adapter.ConnectToKnownDeviceAsync(DeviceGuid);
-        var service = await _device.GetServiceAsync(Guid.Parse(ServiceGuid));
-        _cmdCharacteristic = await service.GetCharacteristicAsync(Guid.Parse(CmdGuid));
-        _tmpCharacteristic = await service.GetCharacteristicAsync(Guid.Parse(TmpGuid));
+        var service = await _device.GetServiceAsync(UUIDs.Service);
+        idCharacteristic = await service.GetCharacteristicAsync(UUIDs.Id);
+        voltageCharacteristic = await service.GetCharacteristicAsync(UUIDs.Voltage);
+        batteryLevelCharacteristic = await service.GetCharacteristicAsync(UUIDs.BatteryLevel);
+        isChargingCharacteristic = await service.GetCharacteristicAsync(UUIDs.IsCharging);
+        uptimeCharacteristic = await service.GetCharacteristicAsync(UUIDs.Uptime);
+        temperatureCharacteristic = await service.GetCharacteristicAsync(UUIDs.Temperature);
+        pressureCharacteristic = await service.GetCharacteristicAsync(UUIDs.Pressure);
+        humidityCharacteristic = await service.GetCharacteristicAsync(UUIDs.Humidity);
+        distanceCharacteristic = await service.GetCharacteristicAsync(UUIDs.Distance);
+        motorCharacteristic = await service.GetCharacteristicAsync(UUIDs.Motor);
+        isCatchingCharacteristic = await service.GetCharacteristicAsync(UUIDs.IsCatching);
+        ledBrightnessCharacteristic = await service.GetCharacteristicAsync(UUIDs.LedBrightness);
 
-        _tmpCharacteristic.ValueUpdated += (s, a) =>
-        {
-            string[] kvData = Encoding.UTF8.GetString(a.Characteristic.Value).Split(',');
-            if (kvData.Length > 1)
-            {
-                if (kvData[0] == "0")
-                {
-                    Data.Id = kvData[1];
-                }
-            }
-        };
-        await _tmpCharacteristic.StartUpdatesAsync();
+        idCharacteristic.ValueUpdated += (s, a) => Data.Id = Encoding.UTF8.GetString(a.Characteristic.Value);
+        voltageCharacteristic.ValueUpdated += (s, a) => Data.Voltage = int.Parse(Encoding.UTF8.GetString(a.Characteristic.Value));
+        batteryLevelCharacteristic.ValueUpdated += (s, a) => Data.BatteryLevel = int.Parse(Encoding.UTF8.GetString(a.Characteristic.Value));
+        isChargingCharacteristic.ValueUpdated += (s, a) => Data.IsCharging = bool.Parse(Encoding.UTF8.GetString(a.Characteristic.Value));
+        uptimeCharacteristic.ValueUpdated += (s, a) => Data.Uptime = int.Parse(Encoding.UTF8.GetString(a.Characteristic.Value));
+        temperatureCharacteristic.ValueUpdated += (s, a) => Data.Temperature = float.Parse(Encoding.UTF8.GetString(a.Characteristic.Value));
+        pressureCharacteristic.ValueUpdated += (s, a) => Data.Pressure = float.Parse(Encoding.UTF8.GetString(a.Characteristic.Value));
+        humidityCharacteristic.ValueUpdated += (s, a) => Data.Humidity = float.Parse(Encoding.UTF8.GetString(a.Characteristic.Value));
+        distanceCharacteristic.ValueUpdated += (s, a) => Data.Distance = float.Parse(Encoding.UTF8.GetString(a.Characteristic.Value));
+
+        await idCharacteristic.StartUpdatesAsync();
+        await voltageCharacteristic.StartUpdatesAsync();
+        await batteryLevelCharacteristic.StartUpdatesAsync();
+        await isChargingCharacteristic.StartUpdatesAsync();
+        await uptimeCharacteristic.StartUpdatesAsync();
+        await temperatureCharacteristic.StartUpdatesAsync();
+        await pressureCharacteristic.StartUpdatesAsync();
+        await humidityCharacteristic.StartUpdatesAsync();
+        await distanceCharacteristic.StartUpdatesAsync();
     }
     public async Task StartConnect()
     {
@@ -60,15 +85,15 @@ public class Rover
             catch { }
         }
     }
+    public async Task Move(MotorDirection direction)
+    {
+        var directionByte = (byte)direction;
+        var directionArray = new byte[] { directionByte };
+        await motorCharacteristic.WriteAsync(directionArray);
+        Data.Direction = direction;
+    }
     public async Task<bool> SendCommandAsync(Curiosity.Command command)
     {
-        if (!IsConnected || _cmdCharacteristic == null)
-            return false;
-
-        var commandByte = (byte)command;
-        var commandArray = new byte[] { commandByte };
-        await _cmdCharacteristic.WriteAsync(commandArray);
-
         return true;
     }
 }

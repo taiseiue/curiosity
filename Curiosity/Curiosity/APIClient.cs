@@ -21,6 +21,7 @@ public class APIClient
             { new StringContent(data.Pressure.ToString()), "pressure" },
             { new StringContent(data.Humidity.ToString()), "humidity" },
             { new StringContent(data.Distance.ToString()), "distance" },
+            { new StringContent(data.Direction.ToString()), "direction" },
             { new StringContent(data.IsCatching.ToString()), "isCatching" },
             { new StringContent(data.LedBrightness.ToString()), "ledBrightness" },
             { new StringContent(data.MotorFrontLeft.ToString()), "motorFrontLeft" },
