@@ -12,27 +12,34 @@
 
 @if (Rover != null)
 {
-    <button class="btn btn-secondary" @onmousedown="() => Rover.Move(MotorDirection.Stop)"
-        @ontouchleave="() => Rover.Move(MotorDirection.Stop)">停止</button>
-    <button class="btn btn-secondary" @onmousedown="() => Rover.Move(MotorDirection.Forward)"
-        @ontouchleave="() => Rover.Move(MotorDirection.Stop)">前進</button>
-    <button class="btn btn-secondary" @onmousedown="() => Rover.Move(MotorDirection.Backward)"
-        @ontouchleave="() => Rover.Move(MotorDirection.Stop)">後退</button>
-    <button class="btn btn-secondary" @onmousedown="() => Rover.Move(MotorDirection.TurnRight)"
-        @ontouchleave="() => Rover.Move(MotorDirection.Stop)">右回転</button>
-    <button class="btn btn-secondary" @onmousedown="() => Rover.Move(MotorDirection.TurnLeft)"
-        @ontouchleave="() => Rover.Move(MotorDirection.Stop)">左回転</button>
-    <button class="btn btn-secondary" @onmousedown="() => Rover.Move(MotorDirection.Right)"
-        @ontouchleave="() => Rover.Move(MotorDirection.Stop)">右移動</button>
-    <button class="btn btn-secondary" @onmousedown="() => Rover.Move(MotorDirection.Left)"
-        @ontouchleave="() => Rover.Move(MotorDirection.Stop)">左移動</button>
-    <button class="btn btn-secondary" @onclick="APITest">APIリクエスト</button>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+        <div>
+            <button class="btn btn-secondary" style="width: 100px;" @onmousedown="() => Rover.Move(MotorDirection.Forward)"
+                @onmouseleave="() => Rover.Move(MotorDirection.Stop)">前進</button>
+        </div>
+        <div style="display: flex; flex-direction: row; justify-content: center; gap: 8px;">
+            <button class="btn btn-secondary" style="width: 100px;" @onmousedown="() => Rover.Move(MotorDirection.Left)"
+                @onmouseleave="() => Rover.Move(MotorDirection.Stop)">左</button>
+            <button class="btn btn-danger" style="width: 100px;" @onmousedown="() => Rover.Move(MotorDirection.Stop)"
+                @onmouseleave="() => Rover.Move(MotorDirection.Stop)">停止</button>
+            <button class="btn btn-secondary" style="width: 100px;" @onmousedown="() => Rover.Move(MotorDirection.Right)"
+                @onmouseleave="() => Rover.Move(MotorDirection.Stop)">右</button>
+        </div>
+        <div>
+            <button class="btn btn-secondary" style="width: 100px;" @onmousedown="() => Rover.Move(MotorDirection.Backward)"
+                @onmouseleave="() => Rover.Move(MotorDirection.Stop)">後退</button>
+        </div>
+        <div style="margin-top: 12px;">
+            <button class="btn btn-primary" @onclick="APITest">APIリクエスト</button>
+        </div>
+    </div>
     <hr />
     <img src="@($"data:image/png;base64,{currentImageBase64}")" alt="Rover Camera" style="max-width: 100%; height: auto;" />
     <hr />
     <h3>ローバーの状態</h3>
     <p>稼働時間: @Rover.Data.Uptime 秒</p>
     <p>バッテリー残量: @Rover.Data.BatteryLevel %</p>
+    <p>電源電圧: @Rover.Data.Voltage %</p>
     <p>温度: @Rover.Data.Temperature °C</p>
     <p>気圧: @Rover.Data.Pressure hPa</p>
     <p>湿度: @Rover.Data.Humidity %</p>
@@ -51,7 +58,7 @@ else
     string currentImageBase64 = "";
     Timer timer;
     Rover Rover = new Rover();
-    APIClient apiClient = new APIClient("http://192.168.12.116:8080");
+    APIClient apiClient = new APIClient("https://curiosity.taiseiue.jp");
     CameraService camera;
     private async Task APITest()
     {
@@ -95,8 +102,9 @@ else
         timer = new Timer(10000);
         timer.Elapsed += async (sender, e) =>
         {
-            await camera.CapturePhotoAsync();
+            await InvokeAsync(StateHasChanged);
+            //await camera.CapturePhotoAsync();
         };
-        timer.Start();
+        //timer.Start();
     }
 }
