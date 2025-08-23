@@ -35,17 +35,20 @@ public class HubClient : IDirectionClient, IHubConnectionObserver, IDisposable
 
     public Task OnClosed(Exception? exception)
     {
-        throw new NotImplementedException();
+        Connection.Register<IDirectionClient>(this);
+        return Task.CompletedTask;
     }
 
     public Task OnReconnected(string? connectionId)
     {
-        throw new NotImplementedException();
+        // throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
     public Task OnReconnecting(Exception? exception)
     {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
     public Task ReceiveDirectionAsync(MotorDirection direction)

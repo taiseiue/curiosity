@@ -7,7 +7,7 @@ public class APIClient
     {
         BaseUrl = baseUrl;
     }
-    public async Task<bool> PostData(RoverData data, byte[] imageData)
+    public async Task<HttpResponseMessage> PostData(RoverData data, byte[] imageData)
     {
         using var streamContent = new StreamContent(new MemoryStream(imageData));
         using var form = new MultipartFormDataContent
@@ -32,7 +32,7 @@ public class APIClient
         };
 
         HttpResponseMessage response = await _httpClient.PostAsync($"{BaseUrl}/api/v0/post", form);
-        return response.IsSuccessStatusCode;
+        return response;
     }
     public string BaseUrl { get; }
     private HttpClient _httpClient = new HttpClient();

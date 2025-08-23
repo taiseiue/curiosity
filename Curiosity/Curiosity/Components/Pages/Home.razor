@@ -10,15 +10,23 @@
 
 <h1>Curiosityへようこそ!</h1>
 
-@if (Rover!=null)
+@if (Rover != null)
 {
-    <button class="btn btn-secondary" @onclick="() => Rover.Move(MotorDirection.Stop)">停止</button>
-    <button class="btn btn-secondary" @onclick="() => Rover.Move(MotorDirection.Forward)">前進</button>
-    <button class="btn btn-secondary" @onclick="() => Rover.Move(MotorDirection.Backward)">後退</button>
-    <button class="btn btn-secondary" @onclick="() => Rover.Move(MotorDirection.TurnRight)">右回転</button>
-    <button class="btn btn-secondary" @onclick="() => Rover.Move(MotorDirection.TurnLeft)">左回転</button>
-    <button class="btn btn-secondary" @onclick="() => Rover.Move(MotorDirection.Right)">右移動</button>
-    <button class="btn btn-secondary" @onclick="() => Rover.Move(MotorDirection.Left)">左移動</button>
+    <button class="btn btn-secondary" @onmousedown="() => Rover.Move(MotorDirection.Stop)"
+        @ontouchleave="() => Rover.Move(MotorDirection.Stop)">停止</button>
+    <button class="btn btn-secondary" @onmousedown="() => Rover.Move(MotorDirection.Forward)"
+        @ontouchleave="() => Rover.Move(MotorDirection.Stop)">前進</button>
+    <button class="btn btn-secondary" @onmousedown="() => Rover.Move(MotorDirection.Backward)"
+        @ontouchleave="() => Rover.Move(MotorDirection.Stop)">後退</button>
+    <button class="btn btn-secondary" @onmousedown="() => Rover.Move(MotorDirection.TurnRight)"
+        @ontouchleave="() => Rover.Move(MotorDirection.Stop)">右回転</button>
+    <button class="btn btn-secondary" @onmousedown="() => Rover.Move(MotorDirection.TurnLeft)"
+        @ontouchleave="() => Rover.Move(MotorDirection.Stop)">左回転</button>
+    <button class="btn btn-secondary" @onmousedown="() => Rover.Move(MotorDirection.Right)"
+        @ontouchleave="() => Rover.Move(MotorDirection.Stop)">右移動</button>
+    <button class="btn btn-secondary" @onmousedown="() => Rover.Move(MotorDirection.Left)"
+        @ontouchleave="() => Rover.Move(MotorDirection.Stop)">左移動</button>
+    <button class="btn btn-secondary" @onclick="APITest">APIリクエスト</button>
     <hr />
     <img src="@($"data:image/png;base64,{currentImageBase64}")" alt="Rover Camera" style="max-width: 100%; height: auto;" />
     <hr />
@@ -44,14 +52,33 @@ else
     Timer timer;
     Rover Rover = new Rover();
     APIClient apiClient = new APIClient("http://192.168.12.116:8080");
-    
+    CameraService camera;
+    private async Task APITest()
+    {
+        await camera.CapturePhotoAsync();
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        camera = new CameraService();
+        camera.PhotoCaptured += async (sender, data) =>
+        {
+            try
+            {
+                var result = await apiClient.PostData(Rover.Data, data);
+                rawText = $"HTTP {result.StatusCode}: {await result.Content.ReadAsStringAsync()}";
+            }
+            catch (Exception ex)
+            {
+                rawText = $"Error: {ex.Message}";
+            }
+            StateHasChanged();
+        };
         await Rover.StartConnect();
         try
         {
-           HubClient hub = await HubClient.ConnectAsync("https://rover-hub.taiseiue.jp/command");
+            HubClient hub = await HubClient.ConnectAsync("https://rover-hub.taiseiue.jp/command");
             hub.DirectionReceived += async (sender, direction) =>
             {
                 rawText = direction.ToString();
@@ -64,11 +91,7 @@ else
         {
             rawText = $"Error: {ex.Message}";
         }
-        var camera = new CameraService();
-        camera.PhotoCaptured += async (sender, data) =>
-        {
-            StateHasChanged();
-        };
+
         timer = new Timer(10000);
         timer.Elapsed += async (sender, e) =>
         {
